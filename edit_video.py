@@ -279,7 +279,7 @@ def new_prompt(text, w=530, h=35):
 
 def track_selection_dialog():
     track_list = []
-    audio_setup = ["Game + Mic", "Desktop Audio", "Mic", "Game", "Discord", "Game + Discord + Mic"]
+    audio_setup = ["[1] Game/Window", "[2] Desktop Audio", "[3] ModMic", "[4] Snowball", "[5] Compressed Snowball", "[6] Discord"]
 
     if int(num_audio_streams) != 0 and int(num_audio_streams) != 100:
         for track_num in range(int(num_audio_streams)):

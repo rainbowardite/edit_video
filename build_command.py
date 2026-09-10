@@ -207,11 +207,6 @@ def build_command(
             "pipe:1", # redirect output to stdout for real time print
         ])
 
-    command.extend([
-        "-i",
-        f"{input}", # input path
-    ])
-
     if clip != 0:
         command.extend([
             "-ss",
@@ -219,6 +214,11 @@ def build_command(
             "-t",
             f"{clip}" #clip length
         ])
+
+    command.extend([
+        "-i",
+        f"{input}", # input path
+    ])
 
     if type == "mp4":
 
