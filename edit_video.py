@@ -1,6 +1,7 @@
 import os
 import sys
 import threading
+from concurrent.futures import ThreadPoolExecutor
 import subprocess
 from pathlib import Path
 import customtkinter as window
@@ -74,9 +75,9 @@ def export_file(command):
     print_to_console(command)
 
     if actually_export:
-        thread = threading.Thread(target=run_ffmpeg(command))
-        thread.start()
-        thread.join()
+        executor = ThreadPoolExecutor()
+        future = executor.submit(run_ffmpeg, command)
+        #future.add_done_callback(handle_result)
     else:
         print_to_console("file exporting disabled\n")
 
