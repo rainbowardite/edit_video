@@ -130,6 +130,7 @@ def process(encode=0, max_fps=0, crf=0, exporter=0):
     quality = ""
     type = ""
     overwrite = False
+    audio_merge = "no"
 
     output_location = output_location_prompt.get()
     output_name = output_name_prompt.get()
@@ -140,6 +141,7 @@ def process(encode=0, max_fps=0, crf=0, exporter=0):
     type = output_dropdown.get()
     resolution_input = resolution_prompt.get()
     fps_input = fps_prompt.get()
+    audio_merge = audio_merge_var.get()
 
     if resolution_input and encode == 0:
         encode = set_to_int(resolution_input)
@@ -221,7 +223,8 @@ def process(encode=0, max_fps=0, crf=0, exporter=0):
             exporter,
             quality,
             type,
-            overwrite
+            overwrite,
+            audio_merge
         )
     else:
         if track_list:
@@ -238,7 +241,8 @@ def process(encode=0, max_fps=0, crf=0, exporter=0):
                 exporter,
                 quality,
                 type,
-                overwrite
+                overwrite,
+                audio_merge
             )
         else:
             print_to_program("Error: Problem in track_list", "red")
@@ -280,7 +284,7 @@ def new_prompt(text, w=530, h=35):
 
 def track_selection_dialog():
     track_list = []
-    audio_setup = ["[1] Game/Window", "[2] Desktop Audio", "[3] ModMic", "[4] Snowball", "[5] Compressed Snowball", "[6] Discord"]
+    audio_setup = ["Game/Window", "Desktop Audio", "ModMic", "Snowball", "Compressed Snowball", "Discord"]
 
     if int(num_audio_streams) != 0 and int(num_audio_streams) != 100:
         for track_num in range(int(num_audio_streams)):
@@ -380,6 +384,17 @@ output_dropdown = window.CTkOptionMenu(
     #command=
 )
 output_dropdown.set("mp4")
+
+audio_merge_var = window.StringVar(value="no")
+audio_merge_checkbox = window.CTkCheckBox(
+    master=app,
+    text="Merge Audio",
+    #command=checkbox_callback,
+    variable=audio_merge_var,
+    onvalue="yes",
+    offvalue="no"
+)
+
 export_folder_button = window.CTkButton(master=app, text="Open Output Folder", width=165, command=open_export_folder)
 
 output_console = new_label("")
@@ -433,6 +448,8 @@ open_folder_button.place(relx=0.92, rely=0.46, anchor=window.W)
 
 output_dropdown_label.place(relx=0.84, rely=0.55, anchor=window.E)
 output_dropdown.place(relx=0.98, rely=0.55, anchor=window.E)
+
+audio_merge_checkbox.place(relx=0.855, rely=0.62, anchor=window.W)
 
 encode_options_label.place(relx=0.06, rely=0.57, anchor=window.W)
 

@@ -39,7 +39,8 @@ def map_mp3_audio(cmd, tracks, list_of_tracks):
         )
     return cmd
 
-def map_av(cmd, tracks, list_of_tracks):
+def map_av(cmd, tracks, list_of_tracks, audio_merge):
+
     cmd.extend(
         [
             "-map",
@@ -48,22 +49,6 @@ def map_av(cmd, tracks, list_of_tracks):
     )
 
     if tracks == 100:
-        #cmd.extend(
-        #    [
-        #        "-map",
-        #        "0:a:0", # map audio 1
-        #        "-map",
-        #        "0:a:1", #           2
-        #        "-map",
-        #        "0:a:2", #           3
-        #        "-map",
-        #        "0:a:3", #           4
-        #        "-map",
-        #        "0:a:4", #           5
-        #        "-map",
-        #        "0:a:5", #           6
-        #    ]
-        #)
         cmd.extend(
             [
                 "-map",
@@ -74,11 +59,25 @@ def map_av(cmd, tracks, list_of_tracks):
         )
     else:
         mapped_audio = []
-        for index, _ in enumerate(range(tracks)):
+
+        if audio_merge == "yes":
             mapped_audio.extend([
-                "-map",
-                f"0:a:{list_of_tracks[index]}",
+                "-filter_complex"
             ])
+            streams = ""
+            for index, _ in enumerate(range(tracks)):
+                streams+=f"[0:a:{list_of_tracks[index]}]"
+            mapped_audio.extend([
+                f"{streams}amix=inputs={tracks}[aout]",
+                "-map",
+                "[aout]"
+            ])
+        else:
+            for index, _ in enumerate(range(tracks)):
+                mapped_audio.extend([
+                    "-map",
+                    f"0:a:{list_of_tracks[index]}",
+                ])
 
         cmd.extend(mapped_audio)
         return cmd
@@ -119,7 +118,7 @@ def command_generator(cmd, res, fps, crf, option, quality):
     ])
     return cmd
 
-def build_video(_cmd, res, fps, crf_num, output_path, encoder, qual, filetype):
+def build_video(_cmd, res, fps, crf_num, output_path, encoder, qual, filetype, audio_merge):
     default_crf = 24
     if encoder == 1:
         if res != 0 and fps != 0:
@@ -151,18 +150,25 @@ def build_video(_cmd, res, fps, crf_num, output_path, encoder, qual, filetype):
         )
         cmd = _cmd
     else:
-        _cmd.extend(
-            [
-                "-c:v",
-                "copy", # copy video codec
-            ]
-        )
+        _cmd.extend([
+            "-c:v",
+            "copy", # copy video codec
+            ])
         cmd = _cmd
 
-    cmd.extend([
+    if audio_merge == "yes":
+        cmd.extend([
             "-c:a",
-            "copy", # audio codec
-            f"{output_path}.{filetype}" # output file
+            "aac", # audio codec
+        ])
+    else:
+        cmd.extend([
+            "-c:a",
+            "copy",
+        ])
+
+    cmd.extend([
+        f"{output_path}.{filetype}" # output file
     ])
 
     return cmd
@@ -180,7 +186,8 @@ def build_command(
     exporter: int,
     quality: str,
     type: str,
-    overwrite: bool
+    overwrite: bool,
+    audio_merge: str
 ) -> list:
 
     command = [
@@ -223,11 +230,11 @@ def build_command(
     if type == "mp4":
 
         if(num_tracks != 0):
-            mapped_av = map_av(command, num_tracks, track_list)
+            mapped_av = map_av(command, num_tracks, track_list, audio_merge)
             if mapped_av:
                 command = mapped_av
 
-        build_video(command, resolution, max_fps, crf, output, exporter, quality, type)
+        build_video(command, resolution, max_fps, crf, output, exporter, quality, type, audio_merge)
     elif type == "mp3":
         command = map_mp3_audio(command, num_tracks, track_list)
         command.extend([
