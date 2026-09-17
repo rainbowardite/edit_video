@@ -1,5 +1,6 @@
 import os
 import sys
+import ffmpeg
 import threading
 from concurrent.futures import ThreadPoolExecutor
 import subprocess
@@ -280,11 +281,70 @@ def process(encode=0, max_fps=0, crf=0, exporter=0):
         else:
             print_to_program("Error: Input file does not exist.", "red")
 
+def set_audio_metadata(stream_titles):
+
+    if len(stream_titles) >= 1:
+        audio_1_checkbox.configure(state="normal")
+        audio_1_checkbox.configure(text=f"[0] {stream_titles[0]}")
+    if len(stream_titles) >= 2:
+        audio_merge_checkbox.configure(state="normal")
+        audio_2_checkbox.configure(state="normal")
+        audio_2_checkbox.configure(text=f"[1] {stream_titles[1]}")
+    if len(stream_titles) >= 3:
+        audio_3_checkbox.configure(state="normal")
+        audio_3_checkbox.configure(text=f"[2] {stream_titles[2]}")
+    if len(stream_titles) >= 4:
+        audio_4_checkbox.configure(state="normal")
+        audio_4_checkbox.configure(text=f"[3] {stream_titles[3]}")
+    if len(stream_titles) >= 5:
+        audio_5_checkbox.configure(state="normal")
+        audio_5_checkbox.configure(text=f"[4] {stream_titles[4]}")
+    if len(stream_titles) >= 6:
+        audio_6_checkbox.configure(state="normal")
+        audio_6_checkbox.configure(text=f"[5] {stream_titles[5]}")
+
+
+def get_audio_metadata(file_name):
+    audio_merge_checkbox.configure(state="disabled")
+    audio_1_checkbox.configure(state="disabled")
+    audio_1_checkbox.configure(text="[0]")
+    audio_2_checkbox.configure(state="disabled")
+    audio_2_checkbox.configure(text="[1]")
+    audio_3_checkbox.configure(state="disabled")
+    audio_3_checkbox.configure(text="[2]")
+    audio_4_checkbox.configure(state="disabled")
+    audio_4_checkbox.configure(text="[3]")
+    audio_5_checkbox.configure(state="disabled")
+    audio_5_checkbox.configure(text="[4]")
+    audio_6_checkbox.configure(state="disabled")
+    audio_6_checkbox.configure(text="[5]")
+
+    if file_name:
+
+        stream_titles = []
+        try:
+            probe = ffmpeg.probe(file_name)
+            audio_streams = [stream for stream in probe['streams'] if stream['codec_type'] == 'audio']
+            print(audio_streams)
+            for index, stream in enumerate(audio_streams):
+                tags = stream.get('tags', {})
+                track_title = tags.get('title', 'Unnamed Track')
+                if track_title == "Unnamed Track":
+                    track_title = tags.get('name', "Unnamed Track")
+
+                stream_titles.append(track_title)
+
+            set_audio_metadata(stream_titles)
+        except ffmpeg.Error as e:
+            print("Error reading file:", e.stderr.decode())
+
+
 def select_file():
     print_to_program("", "white")
     file_name = window.filedialog.askopenfilename()
     input_path_prompt.delete(0, "end")
     input_path_prompt.insert(0, f"{str(file_name)}")
+    get_audio_metadata(file_name)
 
 def select_folder():
     print_to_program("", "white")
@@ -389,63 +449,70 @@ audio_merge_checkbox = window.CTkCheckBox(
     #command=checkbox_callback,
     variable=audio_merge_var,
     onvalue="yes",
-    offvalue="no"
+    offvalue="no",
+    state="disabled"
 )
 
-audio_1var = window.StringVar(value="yes")
+audio_1var = window.StringVar(value="no")
 audio_1_checkbox = window.CTkCheckBox(
     master=app,
-    text="[0] Game/Window",
+    text="[0]",
     #command=checkbox_callback,
     variable=audio_1var,
     onvalue="on",
-    offvalue="off"
+    offvalue="off",
+    state="disabled"
 )
-audio_1_checkbox.select()
+#audio_1_checkbox.select()
 audio_2var = window.StringVar(value="off")
 audio_2_checkbox = window.CTkCheckBox(
     master=app,
-    text="[1] Desktop Audio",
+    text="[1]",
     #command=checkbox_callback,
     variable=audio_2var,
     onvalue="on",
-    offvalue="off"
+    offvalue="off",
+    state="disabled"
 )
 audio_3var = window.StringVar(value="off")
 audio_3_checkbox = window.CTkCheckBox(
     master=app,
-    text="[2] ModMic",
+    text="[2]",
     #command=checkbox_callback,
     variable=audio_3var,
     onvalue="on",
-    offvalue="off"
+    offvalue="off",
+    state="disabled"
 )
 audio_4var = window.StringVar(value="off")
 audio_4_checkbox = window.CTkCheckBox(
     master=app,
-    text="[3] Snowball",
+    text="[3]",
     #command=checkbox_callback,
     variable=audio_4var,
     onvalue="on",
-    offvalue="off"
+    offvalue="off",
+    state="disabled"
 )
 audio_5var = window.StringVar(value="off")
 audio_5_checkbox = window.CTkCheckBox(
     master=app,
-    text="[4] Compressed Snowball",
+    text="[4]",
     #command=checkbox_callback,
     variable=audio_5var,
     onvalue="on",
-    offvalue="off"
+    offvalue="off",
+    state="disabled"
 )
 audio_6var = window.StringVar(value="off")
 audio_6_checkbox = window.CTkCheckBox(
     master=app,
-    text="[5] Discord",
+    text="[5]",
     #command=checkbox_callback,
     variable=audio_6var,
     onvalue="on",
-    offvalue="off"
+    offvalue="off",
+    state="disabled"
 )
 
 export_folder_button = window.CTkButton(master=app, text="Open Output Folder", width=165, command=open_export_folder)
