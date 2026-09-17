@@ -48,39 +48,29 @@ def map_av(cmd, tracks, list_of_tracks, audio_merge):
         ]
     )
 
-    if tracks == 100:
-        cmd.extend(
-            [
-                "-map",
-                "0:a", #map all audio
-                "-async",
-                "1",
-            ]
-        )
+    mapped_audio = []
+
+    if audio_merge == "yes":
+        mapped_audio.extend([
+            "-filter_complex"
+        ])
+        streams = ""
+        for index, _ in enumerate(range(tracks)):
+            streams+=f"[0:a:{list_of_tracks[index]}]"
+        mapped_audio.extend([
+            f"{streams}amix=inputs={tracks}[aout]",
+            "-map",
+            "[aout]"
+        ])
     else:
-        mapped_audio = []
-
-        if audio_merge == "yes":
+        for index, _ in enumerate(range(tracks)):
             mapped_audio.extend([
-                "-filter_complex"
-            ])
-            streams = ""
-            for index, _ in enumerate(range(tracks)):
-                streams+=f"[0:a:{list_of_tracks[index]}]"
-            mapped_audio.extend([
-                f"{streams}amix=inputs={tracks}[aout]",
                 "-map",
-                "[aout]"
+                f"0:a:{list_of_tracks[index]}",
             ])
-        else:
-            for index, _ in enumerate(range(tracks)):
-                mapped_audio.extend([
-                    "-map",
-                    f"0:a:{list_of_tracks[index]}",
-                ])
 
-        cmd.extend(mapped_audio)
-        return cmd
+    cmd.extend(mapped_audio)
+    return cmd
 
 
 def command_generator(cmd, res, fps, crf, option, quality):

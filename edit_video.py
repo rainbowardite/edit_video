@@ -107,6 +107,37 @@ def initialize_input_path():
 
     return input_path
 
+def initialize_checkmarks():
+    stream_number = 0
+    stream_list = []
+
+    audio_1_value = audio_1var.get()
+    audio_2_value = audio_2var.get()
+    audio_3_value = audio_3var.get()
+    audio_4_value = audio_4var.get()
+    audio_5_value = audio_5var.get()
+    audio_6_value = audio_6var.get()
+
+    if audio_1_value == "on":
+        stream_number = ( stream_number + 1 )
+        stream_list.append("0")
+    if audio_2_value == "on":
+        stream_number = ( stream_number + 1 )
+        stream_list.append("1")
+    if audio_3_value == "on":
+        stream_number = ( stream_number + 1 )
+        stream_list.append("2")
+    if audio_4_value == "on":
+        stream_number = ( stream_number + 1 )
+        stream_list.append("3")
+    if audio_5_value == "on":
+        stream_number = ( stream_number + 1 )
+        stream_list.append("4")
+    if audio_6_value == "on":
+        stream_number = ( stream_number + 1 )
+        stream_list.append("5")
+    return stream_number, stream_list
+
 
 def process(encode=0, max_fps=0, crf=0, exporter=0):
     global input_path
@@ -136,7 +167,6 @@ def process(encode=0, max_fps=0, crf=0, exporter=0):
     output_name = output_name_prompt.get()
     start_time = start_time_prompt.get()
     end_time = end_time_prompt.get()
-    num_audio_streams_input = audio_track_select.get()
     quality = encode_dropdown.get()
     type = output_dropdown.get()
     resolution_input = resolution_prompt.get()
@@ -196,18 +226,10 @@ def process(encode=0, max_fps=0, crf=0, exporter=0):
         processed_end_time = set_timecode_hour(end_time)
         clip_length = get_timecode_difference(processed_start_time, processed_end_time)
 
-    if not num_audio_streams_input:
-        num_audio_streams = 0
-    else:
-        if num_audio_streams_input.strip():
-            num_audio_streams = int(num_audio_streams_input)
-        else:
-            num_audio_streams = 0
-
     if not quality:
         quality = "veryslow"
 
-    track_list = track_selection_dialog()
+    num_audio_streams, track_list = initialize_checkmarks()
 
     if num_audio_streams == 0 or num_audio_streams == 100:
         command = build_command(
@@ -282,28 +304,6 @@ def new_prompt(text, w=530, h=35):
         corner_radius=8
     )
 
-def track_selection_dialog():
-    track_list = []
-    audio_setup = ["Game/Window", "Desktop Audio", "ModMic", "Snowball", "Compressed Snowball", "Discord"]
-
-    if int(num_audio_streams) != 0 and int(num_audio_streams) != 100:
-        for track_num in range(int(num_audio_streams)):
-            output_num = track_num + 1
-            dialog = window.CTkInputDialog(text=f"0: {audio_setup[0]}\n1: {audio_setup[1]}\n2: {audio_setup[2]}\n3: {audio_setup[3]}\n4: {audio_setup[4]}\n5: {audio_setup[5]}\n\n Pick audio track #{output_num}: ", title="Select Audio Track",)
-
-            user_input = dialog.get_input()
-
-            if not user_input:
-                print_to_program(
-                    f"Error: Invalid input for track number {output_num}", "red"
-                )
-                return
-            else:
-                dialog_response = str(user_input)
-                track_list.append(dialog_response)
-
-    return track_list
-
 def handle_enter(event):
     process()
 
@@ -367,9 +367,6 @@ start_time_prompt = new_prompt("[HH:MM:]SS[.mmm]", 135)
 end_time_label = new_label("End Time")
 end_time_prompt = new_prompt("[HH:MM:]SS[.mmm]", 135)
 
-audio_track_label = new_label("How many audio tracks? [0: track0 ||100: all]")
-audio_track_select = new_prompt("0", 40)
-
 output_path_label = new_label("Output Path")
 output_location_prompt = new_prompt("S:\\Shared Videos\\exports\\", 400)
 output_name_prompt = new_prompt("output", 120)
@@ -393,6 +390,62 @@ audio_merge_checkbox = window.CTkCheckBox(
     variable=audio_merge_var,
     onvalue="yes",
     offvalue="no"
+)
+
+audio_1var = window.StringVar(value="yes")
+audio_1_checkbox = window.CTkCheckBox(
+    master=app,
+    text="[0] Game/Window",
+    #command=checkbox_callback,
+    variable=audio_1var,
+    onvalue="on",
+    offvalue="off"
+)
+audio_1_checkbox.select()
+audio_2var = window.StringVar(value="off")
+audio_2_checkbox = window.CTkCheckBox(
+    master=app,
+    text="[1] Desktop Audio",
+    #command=checkbox_callback,
+    variable=audio_2var,
+    onvalue="on",
+    offvalue="off"
+)
+audio_3var = window.StringVar(value="off")
+audio_3_checkbox = window.CTkCheckBox(
+    master=app,
+    text="[2] ModMic",
+    #command=checkbox_callback,
+    variable=audio_3var,
+    onvalue="on",
+    offvalue="off"
+)
+audio_4var = window.StringVar(value="off")
+audio_4_checkbox = window.CTkCheckBox(
+    master=app,
+    text="[3] Snowball",
+    #command=checkbox_callback,
+    variable=audio_4var,
+    onvalue="on",
+    offvalue="off"
+)
+audio_5var = window.StringVar(value="off")
+audio_5_checkbox = window.CTkCheckBox(
+    master=app,
+    text="[4] Compressed Snowball",
+    #command=checkbox_callback,
+    variable=audio_5var,
+    onvalue="on",
+    offvalue="off"
+)
+audio_6var = window.StringVar(value="off")
+audio_6_checkbox = window.CTkCheckBox(
+    master=app,
+    text="[5] Discord",
+    #command=checkbox_callback,
+    variable=audio_6var,
+    onvalue="on",
+    offvalue="off"
 )
 
 export_folder_button = window.CTkButton(master=app, text="Open Output Folder", width=165, command=open_export_folder)
@@ -438,18 +491,23 @@ start_time_prompt.place(relx=0.25, rely=0.22, anchor=window.W)
 end_time_label.place(relx=0.10, rely=0.30, anchor=window.W)
 end_time_prompt.place(relx=0.25, rely=0.30, anchor=window.W)
 
-audio_track_label.place(relx=0.10, rely=0.38, anchor=window.W)
-audio_track_select.place(relx=0.42, rely=0.38, anchor=window.W)
+output_path_label.place(relx=0.10, rely=0.38, anchor=window.W)
+output_location_prompt.place(relx=0.25, rely=0.38, anchor=window.W)
+output_name_prompt.place(relx=0.76, rely=0.38, anchor=window.W)
+open_folder_button.place(relx=0.92, rely=0.38, anchor=window.W)
+export_folder_button.place(relx=0.50, rely=0.46, anchor=window.CENTER)
 
-output_path_label.place(relx=0.10, rely=0.46, anchor=window.W)
-output_location_prompt.place(relx=0.25, rely=0.46, anchor=window.W)
-output_name_prompt.place(relx=0.76, rely=0.46, anchor=window.W)
-open_folder_button.place(relx=0.92, rely=0.46, anchor=window.W)
+output_dropdown_label.place(relx=0.84, rely=0.46, anchor=window.E)
+output_dropdown.place(relx=0.98, rely=0.46, anchor=window.E)
 
-output_dropdown_label.place(relx=0.84, rely=0.55, anchor=window.E)
-output_dropdown.place(relx=0.98, rely=0.55, anchor=window.E)
+audio_merge_checkbox.place(relx=0.52, rely=0.55, anchor=window.W)
+audio_1_checkbox.place(relx=0.52, rely=0.62, anchor=window.W)
+audio_2_checkbox.place(relx=0.52, rely=0.68, anchor=window.W)
+audio_3_checkbox.place(relx=0.52, rely=0.74, anchor=window.W)
+audio_4_checkbox.place(relx=0.52, rely=0.80, anchor=window.W)
+audio_5_checkbox.place(relx=0.52, rely=0.86, anchor=window.W)
+audio_6_checkbox.place(relx=0.52, rely=0.92, anchor=window.W)
 
-audio_merge_checkbox.place(relx=0.855, rely=0.62, anchor=window.W)
 
 encode_options_label.place(relx=0.06, rely=0.57, anchor=window.W)
 
@@ -472,11 +530,10 @@ encode_dropdown_default.place(relx=0.30, rely=0.87, anchor=window.W)
 #relx=0.8, rely=0.80
 output_console.place(relx=0.10, rely=0.07, anchor=window.W)
 
-export_folder_button.place(relx=0.50, rely=0.60, anchor=window.CENTER)
 
 cpu_encode_and_export_button.place(relx=0.20, rely=0.95, anchor=window.CENTER)
-gpu_encode_and_export_button.place(relx=0.62, rely=0.95, anchor=window.CENTER)
-export_button.place(relx=0.88, rely=0.95, anchor=window.CENTER)
+gpu_encode_and_export_button.place(relx=0.90, rely=0.88, anchor=window.CENTER)
+export_button.place(relx=0.90, rely=0.95, anchor=window.CENTER)
 
 version.place(relx=0.01, rely=0.02, anchor=window.W)
 
