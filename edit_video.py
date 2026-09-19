@@ -76,6 +76,7 @@ def export_file(command):
     print_to_console(command)
 
     if actually_export:
+        print_to_program(f"Exporting {output_path}.{type}", "white")
         executor = ThreadPoolExecutor()
         future = executor.submit(run_ffmpeg, command)
         #future.add_done_callback(handle_result)
@@ -206,7 +207,9 @@ def process(encode=0, max_fps=0, crf=0, exporter=0):
             output_path = f"{output_location}/{output_name}"
 
             output_name_prompt.delete(0, "end")
-            output_name_prompt.insert(0, f"{str(output_name)}")
+            output_name_prompt._activate_placeholder()
+            if output_name:
+                output_name_prompt.insert(0, f"{str(output_name)}")
         else:
             overwrite = True
 
@@ -281,6 +284,50 @@ def process(encode=0, max_fps=0, crf=0, exporter=0):
         else:
             print_to_program("Error: Input file does not exist.", "red")
 
+def reset_cpu_encoder_settings():
+    resolution_prompt.delete(0, "end")
+    resolution_prompt._activate_placeholder()
+    fps_prompt.delete(0, "end")
+    fps_prompt._activate_placeholder()
+    crf_prompt.delete(0, "end")
+    crf_prompt._activate_placeholder()
+    encode_dropdown.set("veryslow")
+
+def reset_checkmarks():
+    audio_merge_var.set("off")
+    audio_merge_checkbox.deselect()
+    audio_merge_checkbox.configure(state="disabled")
+
+    audio_1var.set("off")
+    audio_1_checkbox.deselect()
+    audio_1_checkbox.configure(state="disabled")
+    audio_1_checkbox.configure(text="[0]")
+
+    audio_2_checkbox.deselect()
+    audio_2var.set("off")
+    audio_2_checkbox.configure(state="disabled")
+    audio_2_checkbox.configure(text="[1]")
+
+    audio_3var.set("off")
+    audio_3_checkbox.deselect()
+    audio_3_checkbox.configure(state="disabled")
+    audio_3_checkbox.configure(text="[2]")
+
+    audio_4var.set("off")
+    audio_4_checkbox.deselect()
+    audio_4_checkbox.configure(state="disabled")
+    audio_4_checkbox.configure(text="[3]")
+
+    audio_5var.set("off")
+    audio_5_checkbox.deselect()
+    audio_5_checkbox.configure(state="disabled")
+    audio_5_checkbox.configure(text="[4]")
+
+    audio_6var.set("off")
+    audio_6_checkbox.deselect()
+    audio_6_checkbox.configure(state="disabled")
+    audio_6_checkbox.configure(text="[5]")
+
 def set_audio_metadata(stream_titles):
     if len(stream_titles) >= 1:
         audio_1_checkbox.configure(state="normal")
@@ -302,51 +349,56 @@ def set_audio_metadata(stream_titles):
         audio_6_checkbox.configure(state="normal")
         audio_6_checkbox.configure(text=f"[5] {stream_titles[5]}")
 
-
 def get_audio_metadata(file_name):
-    audio_merge_checkbox.configure(state="disabled")
-    audio_1_checkbox.configure(state="disabled")
-    audio_1_checkbox.configure(text="[0]")
-    audio_2_checkbox.configure(state="disabled")
-    audio_2_checkbox.configure(text="[1]")
-    audio_3_checkbox.configure(state="disabled")
-    audio_3_checkbox.configure(text="[2]")
-    audio_4_checkbox.configure(state="disabled")
-    audio_4_checkbox.configure(text="[3]")
-    audio_5_checkbox.configure(state="disabled")
-    audio_5_checkbox.configure(text="[4]")
-    audio_6_checkbox.configure(state="disabled")
-    audio_6_checkbox.configure(text="[5]")
+    stream_titles = []
+    try:
+        probe = ffmpeg.probe(file_name)
+        audio_streams = [stream for stream in probe['streams'] if stream['codec_type'] == 'audio']
+        for index, stream in enumerate(audio_streams):
+            tags = stream.get('tags', {})
+            track_title = tags.get('title', 'Unnamed Track')
+            if track_title == "Unnamed Track":
+                track_title = tags.get('name', "Unnamed Track")
+            stream_titles.append(track_title)
+
+        set_audio_metadata(stream_titles)
+    except ffmpeg.Error as e:
+        print("Error reading file:", e.stderr.decode())
+
+
+def select_file_logic(file_name):
+    output_dropdown.set("mp4")
+    reset_checkmarks()
+    reset_cpu_encoder_settings()
+
+    input_path_prompt.delete(0, "end")
+    input_path_prompt._activate_placeholder()
+    start_time_prompt.delete(0, "end")
+    start_time_prompt._activate_placeholder()
+    end_time_prompt.delete(0, "end")
+    end_time_prompt._activate_placeholder()
+    output_name_prompt.delete(0, "end")
+    output_name_prompt._activate_placeholder()
 
     if file_name:
-        stream_titles = []
-        try:
-            probe = ffmpeg.probe(file_name)
-            audio_streams = [stream for stream in probe['streams'] if stream['codec_type'] == 'audio']
-            for index, stream in enumerate(audio_streams):
-                tags = stream.get('tags', {})
-                track_title = tags.get('title', 'Unnamed Track')
-                if track_title == "Unnamed Track":
-                    track_title = tags.get('name', "Unnamed Track")
-                stream_titles.append(track_title)
-
-            set_audio_metadata(stream_titles)
-        except ffmpeg.Error as e:
-            print("Error reading file:", e.stderr.decode())
-
+        input_path_prompt.insert(0, f"{str(file_name)}")
+        get_audio_metadata(sanitize_input(file_name))
 
 def select_file():
     print_to_program("", "white")
     file_name = window.filedialog.askopenfilename()
-    input_path_prompt.delete(0, "end")
-    input_path_prompt.insert(0, f"{str(file_name)}")
-    get_audio_metadata(file_name)
+    select_file_logic(file_name)
+
 
 def select_folder():
     print_to_program("", "white")
     folder_name = window.filedialog.askdirectory()
     output_location_prompt.delete(0, "end")
-    output_location_prompt.insert(0, f"{str(folder_name)}")
+    output_location_prompt._activate_placeholder()
+    output_name_prompt.delete(0, "end")
+    output_name_prompt._activate_placeholder()
+    if folder_name:
+        output_location_prompt.insert(0, f"{str(folder_name)}")
 
 def new_label(text):
     return window.CTkLabel(app, text=f"{text}", fg_color="transparent")
@@ -514,7 +566,7 @@ export_button = window.CTkButton(master=app, text="Export", command=process)
 gpu_encode_and_export_button = window.CTkButton(master=app, text="Encode with GPU", command=gpu_process_and_encode)
 cpu_encode_and_export_button = window.CTkButton(master=app, text="Encode with CPU [only mp4]", command=cpu_process_and_encode)
 
-version = new_label("Version 0.0.2")
+version = new_label("Version 0.1.0")
 
 
 encode_options_label = new_label("Optional CPU Encode Settings:")
@@ -623,8 +675,6 @@ line14.place(relx=0.50, rely=0.89, anchor=window.CENTER)
 
 if was_launched_by_context_menu():
     target_file = sys.argv[-1]
-    input_path_prompt.delete(0, "end")
-    input_path_prompt.insert(0, f"{str(target_file)}")
-    get_audio_metadata(sanitize_input(str(target_file)))
+    select_file_logic(str(target_file))
 
 app.mainloop()
