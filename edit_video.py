@@ -282,7 +282,6 @@ def process(encode=0, max_fps=0, crf=0, exporter=0):
             print_to_program("Error: Input file does not exist.", "red")
 
 def set_audio_metadata(stream_titles):
-
     if len(stream_titles) >= 1:
         audio_1_checkbox.configure(state="normal")
         audio_1_checkbox.configure(text=f"[0] {stream_titles[0]}")
@@ -320,18 +319,15 @@ def get_audio_metadata(file_name):
     audio_6_checkbox.configure(text="[5]")
 
     if file_name:
-
         stream_titles = []
         try:
             probe = ffmpeg.probe(file_name)
             audio_streams = [stream for stream in probe['streams'] if stream['codec_type'] == 'audio']
-            print(audio_streams)
             for index, stream in enumerate(audio_streams):
                 tags = stream.get('tags', {})
                 track_title = tags.get('title', 'Unnamed Track')
                 if track_title == "Unnamed Track":
                     track_title = tags.get('name', "Unnamed Track")
-
                 stream_titles.append(track_title)
 
             set_audio_metadata(stream_titles)
@@ -415,11 +411,6 @@ input_path_label = new_label("Input Path *")
 input_path_prompt = new_prompt(r"S:\Shared Videos\OBS_Recordings\input.mp4")
 open_file_button = window.CTkButton(master=app, text="Select", width=30, command=select_file)
 open_vlc_button = window.CTkButton(master=app, text="Open with VLC", width=100, command=open_vlc)
-
-if was_launched_by_context_menu():
-    target_file = sys.argv[-1]
-    input_path_prompt.delete(0, "end")
-    input_path_prompt.insert(0, f"{str(target_file)}")
 
 start_time_label = new_label("Start Time")
 start_time_prompt = new_prompt("[HH:MM:]SS[.mmm]", 135)
@@ -630,5 +621,10 @@ line13.place(relx=0.50, rely=0.87, anchor=window.CENTER)
 line14= new_label("|")
 line14.place(relx=0.50, rely=0.89, anchor=window.CENTER)
 
+if was_launched_by_context_menu():
+    target_file = sys.argv[-1]
+    input_path_prompt.delete(0, "end")
+    input_path_prompt.insert(0, f"{str(target_file)}")
+    get_audio_metadata(sanitize_input(str(target_file)))
 
 app.mainloop()
